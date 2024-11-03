@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cobrona do 3ºD🐍</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(10deg, #5705e7, #f8dba6db);
+        }
+
+        h1 {
+            color: rgb(44, 43, 43);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #game-board {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background-color: #c2c1c3;
+            border: 5px solid #250039;
+            border-radius: 10px;
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .snake, .food {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .snake {
+            background-color: #2ecc71;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .food {
+            background-color: #e74c3c;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+
+        #photo-container {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 330px; 
+        }
+
+        #photo-container img {
+            width: 350px; 
+            height: 350px; 
+            border-radius: 8px;
+            display: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease-in-out;
+        }
+
+        #photo-container img.show {
+            display: block;
+            transform: scale(1.1);
+        }
+
+        #video-container {
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #video-container iframe {
+            width: 560px;
+            height: 315px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Cobrona do 3ºD🐍</h1>
+        <div id="game-board"></div>
+        <div id="photo-container">
+            <img id="photo" src="" alt="Foto da Turma">
+        </div>
+    </div>
+
+    <div id="video-container">
+        <iframe id="video" width="560" height="315" src="https://www.youtube.com/embed/vCqjSiXeLGU?enablejsapi=1" 
+        title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <script>
+        const board = document.getElementById('game-board');
+        const photoElement = document.getElementById('photo');
+        const videoContainer = document.getElementById('video-container');
+        const video = document.getElementById('video');
+
+        const gridSize = 20;
+        let snake = [{x: 10, y: 10}];
+        let direction = {x: 0, y: 0};
+        let food = {x: 15, y: 15};
+        let snakeSpeed = 200; 
+        let piecesEaten = 0;
+        let photos = [
+            'foto1.jpeg',
+            'foto2.jpeg',
+            'foto3.jpeg',
+            'foto4.jpeg',
+            'foto5.jpeg',
+            'foto6.jpeg',
+            'foto7.jpeg',
+            'foto8.jpeg',
+            'foto9.jpeg',
+            'foto10.jpeg'
+        ];
+        let currentPhotoIndex = 0;
+        let gameInterval;
+
+        function draw() {
+            board.innerHTML = ''; 
+
+            snake.forEach(segment => {
+                const snakeElement = document.createElement('div');
+                snakeElement.style.left = segment.x * gridSize + 'px';
+                snakeElement.style.top = segment.y * gridSize + 'px';
+                snakeElement.classList.add('snake');
+                board.appendChild(snakeElement);
+            });
+
+            const foodElement = document.createElement('div');
+            foodElement.style.left = food.x * gridSize + 'px';
+            foodElement.style.top = food.y * gridSize + 'px';
+            foodElement.classList.add('food');
+            board.appendChild(foodElement);
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                updatePhoto(); 
+                randomizeFoodPosition(); 
+                piecesEaten++;
+                if (piecesEaten === 10) {
+                    showVideo(); 
+                }
+            } else {
+                snake.pop(); 
+            }
+
+            if (head.x < 0 || head.x >= board.clientWidth / gridSize || head.y < 0 || head.y >= board.clientHeight / gridSize) {
+                gameOver();
+            }
+        }
+
+        function randomizeFoodPosition() {
+            food = {
+                x: Math.floor(Math.random() * (board.clientWidth / gridSize)),
+                y: Math.floor(Math.random() * (board.clientHeight / gridSize))
+            };
+        }
+
+        function updatePhoto() {
+            if (currentPhotoIndex < photos.length) {
+                photoElement.src = photos[currentPhotoIndex];
+                photoElement.classList.add('show'); 
+                currentPhotoIndex++;
+            } else {
+                currentPhotoIndex = 0; 
+            }
+        }
+
+        function showVideo() {
+            clearInterval(gameInterval); 
+            videoContainer.style.display = 'flex'; 
+            video.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); 
+
+            video.addEventListener('load', () => {
+                video.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); 
+            });
+
+            video.onended = function() {
+                videoContainer.style.display = 'none'; 
+                resumeGame(); 
+            };
+        }
+
+        function resumeGame() {
+            piecesEaten = 0; 
+            currentPhotoIndex = 0; 
+            photoElement.classList.remove('show');
+            gameInterval = setInterval(gameLoop, snakeSpeed); 
+        }
+
+        window.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'w':
+                    if (direction.y === 0) direction = {x: 0, y: -1};
+                    break;
+                case 's':
+                    if (direction.y === 0) direction = {x: 0, y: 1};
+                    break;
+                case 'a':
+                    if (direction.x === 0) direction = {x: -1, y: 0};
+                    break;
+                case 'd':
+                    if (direction.x === 0) direction = {x: 1, y: 0};
+                    break;
+            }
+        });
+
+        function gameOver() {
+            alert('Você é como um Wi-Fi lento: só traz frustração e ninguém tem paciência para você!!! by.gepeteco');
+            snake = [{x: 10, y: 10}];
+            direction = {x: 0, y: 0};
+            currentPhotoIndex = 0;
+            piecesEaten = 0;
+            photoElement.classList.remove('show');
+            videoContainer.style.display = 'none';
+            clearInterval(gameInterval); 
+        }
+
+        function gameLoop() {
+            moveSnake();
+            draw();
+        }
+
+        gameInterval = setInterval(gameLoop, snakeSpeed); 
+    </script>
+</body>
+</html>
